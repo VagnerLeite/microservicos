@@ -1,0 +1,59 @@
+version: '3.0'
+services:
+  webserver:
+    container_name: 'productapp-nginx'
+    depends_on:
+      - php
+    image: "nginx:1.15-alpine"
+    networks:
+      - backend
+      - frontend
+    ports:
+      - "8001:80"
+    volumes:
+      - "./nginx/conf:/etc/nginx/conf.d/"
+      - "./nginx/certs:/etc/nginx/certs/"
+      - "../:/var/www/html"
+      - .:/code:delegated
+
+  php:
+    container_name: 'productapp'
+    build: ./php
+    depends_on:
+      - redis
+      - database
+    networks:
+      - backend
+    user: 1000:1000
+    volumes:
+      - "../:/var/www/html"
+      - "./php/.composer/:/.composer/"
+      - .:/code:delegated
+
+  redis:
+    container_name: 'productapp-redis'
+    image: "redis:alpine"
+    networks:
+      - backend
+    ports:
+      - "6379:6379"
+    volumes:
+      - "./redis/data/:/data"
+      - .:/code:delegated
+
+  database:
+    container_name: 'productapp-mysql'
+    image: "mysql:5.7"
+    environment:
+      MYSQL_ROOT_PASSWORD: 'mysql'
+    networks:
+      - backend
+    ports:
+      - "3306:3306"
+    volumes:
+      - "./mysql/data/:/var/lib/mysql"
+      - .:/code:delegated
+
+networks:
+  backend:
+  frontend:
